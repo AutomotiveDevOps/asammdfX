@@ -23,14 +23,14 @@ struct node {
 
 static PyObject* sort_data_block(PyObject* self, PyObject* args)
 {
-    unsigned long long id_size, position=0, size, tgt=10000;
+    unsigned long long id_size, position=0, size;
     unsigned long rec_size, length, rec_id;
     PyObject *signal_data, *partial_records, *record_size, *optional, *mlist;
     PyObject *bts, *key, *value, *rem=NULL;
-    unsigned char *buf, *end, *orig, val;
+    unsigned *end, *orig;
     struct node * head = NULL, *last=NULL, *item;
     
-    
+    char *buf=NULL;
 
     if (!PyArg_ParseTuple(args, "OOOk|O", &signal_data, &partial_records, &record_size, &id_size, &optional))
     {
@@ -56,7 +56,7 @@ static PyObject* sort_data_block(PyObject* self, PyObject* args)
             last = item; 
         }
  
-        buf = (unsigned char *) PyBytes_AS_STRING(signal_data);
+        buf = PyBytes_AS_STRING(signal_data);
         orig = buf;
         size = PyBytes_GET_SIZE(signal_data);
         end = buf + size;
@@ -81,7 +81,7 @@ static PyObject* sort_data_block(PyObject* self, PyObject* args)
             }
             
             if (!mlist) {
-                snprintf(err_string, 1024, "Unknown record id %d ", rec_id);
+                snprintf(err_string, 1024, "Unknown record id %lu ", rec_id);
                 PyErr_SetString(PyExc_ValueError, err_string);
                 return 0;
             }
@@ -141,11 +141,12 @@ static PyObject* sort_data_block(PyObject* self, PyObject* args)
 
 static PyObject* extract(PyObject* self, PyObject* args)
 {
-    int i=0, j, count, max=0, is_byte_array;
+    int i=0, count, max=0;
+    int is_byte_array;
     int pos=0;
     int size;
     PyObject *signal_data;
-    unsigned char *buf;
+   char *buf;
     PyArrayObject *vals;
     PyArray_Descr *descr;
     void *addr;
@@ -225,14 +226,10 @@ static PyObject* extract(PyObject* self, PyObject* args)
 
 static PyObject* extract_parent(PyObject* self, PyObject* args)
 {
-    int i=0, j, count, max=0, is_byte_array;
-    PyObject *data, *dtype, *dimensions_vals, *bts;
-    unsigned char *buf, *buf2;
-    PyArrayObject *vals;
-    PyArray_Descr *descr;
-    void *addr;
-    unsigned char * addr2;
-    unsigned long record_size, offset, size, dimensions;
+    int i=0, count=0;
+    PyObject *data, *dtype, *bts = NULL;
+    char *buf, *buf2;
+    unsigned long record_size, offset, size;
 
     if(!PyArg_ParseTuple(args, "OiiiO", &data, &record_size, &offset, &size, &dtype))
     {
@@ -275,7 +272,6 @@ static PyObject* lengths(PyObject* self, PyObject* args)
 {
     int i=0;
     Py_ssize_t count;
-    int pos=0;
     PyObject *lst, *values, *item;
 
     if(!PyArg_ParseTuple(args, "O", &lst))
@@ -307,7 +303,7 @@ static PyObject* get_vlsd_offsets(PyObject* self, PyObject* args)
 {
     int i=0;
     Py_ssize_t count;
-    int pos=0;
+//    int pos=0;
     PyObject *lst, *item, *result;
     npy_intp dim[1];
     PyArrayObject *values;
@@ -346,15 +342,15 @@ static PyObject* get_vlsd_offsets(PyObject* self, PyObject* args)
 
 static PyObject* get_text_bytes(PyObject* self, PyObject* args)
 {
-    int i=0;
-    unsigned char mapped;
+//    int i=0;
+//    unsigned char mapped;
     unsigned long long address, size;
-    Py_ssize_t count;
-    int pos=0;
-    PyObject *lst, *item, *stream, *bts, *text, *result;
-    npy_intp dim[1];
-    PyArrayObject *values;
-    unsigned char *data;
+//    Py_ssize_t count;
+//    int pos=0;
+    PyObject *lst=NULL, *stream=NULL, *bts=NULL, *text=NULL, *result=NULL;
+//    npy_intp dim[1];
+//    PyArrayObject *values;
+    char *data;
 
     if(!PyArg_ParseTuple(args, "KOB", &address, &stream, &lst))
     {
@@ -434,10 +430,10 @@ static PyObject* get_text_bytes(PyObject* self, PyObject* args)
 static PyObject* raw_channel_bytes(PyObject* self, PyObject* args)
 {
     unsigned long i=0;
-    unsigned long record_size, byte_offset, byte_size, size, count;
-    PyObject *record_bytes;
-    PyObject *result;
-    unsigned char *buf, *end, *out_ptr;
+    unsigned long record_size, byte_offset, byte_size, count;
+    PyObject *record_bytes=NULL;
+    PyObject *result=NULL;
+    char *buf=NULL, *out_ptr=NULL;
 
     if (!PyArg_ParseTuple(args, "Okkkk", &record_bytes, &record_size, &count, &byte_offset, &byte_size))
     {
@@ -472,8 +468,9 @@ static PyObject* raw_channel(PyObject* self, PyObject* args)
     PyObject *record_bytes;
     PyObject *result, *dtype;
     PyArrayObject * vals;
-    unsigned char *buf, *end, *out_ptr, *addr;
+    unsigned char *addr=NULL;
 
+	char *buf=NULL;
     if (!PyArg_ParseTuple(args, "OOkkk", &record_bytes, &dtype, &record_size, &byte_offset, &byte_size))
     {
         snprintf(err_string, 1024, "raw_channel was called with wrong parameters");
@@ -482,8 +479,6 @@ static PyObject* raw_channel(PyObject* self, PyObject* args)
     }
     else
     {
-        
-        
         buf = PyBytes_AS_STRING(record_bytes);
         buf += byte_offset;
         size = PyBytes_GET_SIZE(record_bytes);
